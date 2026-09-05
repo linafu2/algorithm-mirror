@@ -8,6 +8,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from audit import build_feed_metrics
+from llm import generate_feed_audit
+
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 app = FastAPI()
@@ -98,6 +101,16 @@ class Interaction(BaseModel):
 class ExplainRequest(BaseModel):
     profile: Dict[str, float]
     recent_interactions: List[Dict[str, Any]]
+
+
+class AuditInteraction(BaseModel):
+    post_id: int
+    action: str
+    title: str
+
+
+class AuditRequest(BaseModel):
+    interactions: List[AuditInteraction]
 
 
 def build_profile(interactions: List[Interaction]) -> Dict[str, float]:
@@ -256,3 +269,29 @@ Be honest that this is a simplified simulation, not TikTok's actual algorithm.
             status_code=502,
             detail=f"Claude request failed: {exc}",
         ) from exc
+
+
+@app.post("/audit")
+def audit_feed(req: AuditRequest):
+
+    interactions = [
+        interaction.model_dump()
+        for interaction in req.interactions
+    ]
+
+    metrics = build_feed_metrics(
+        interactions,
+        POSTS,
+    )
+
+    recent_interactions = interactions[-10:]
+
+    ai_audit = generate_feed_audit(
+        metrics=metrics,
+        recent_interactions=recent_interactions,
+    )
+
+    return {
+        "metrics": metrics,
+        "ai_analysis": ai_audit.model_dump(),
+    }
