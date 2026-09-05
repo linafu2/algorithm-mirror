@@ -436,7 +436,7 @@ export default function Home() {
             >
               {traceLoading
                 ? "Tracing recommendation..."
-                : "Why did I get this?"}
+                : "Trace this recommendation"}
             </button>
 
             <button
