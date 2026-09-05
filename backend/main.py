@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from audit import build_feed_metrics
 from llm import generate_feed_audit
+from trace import build_recommendation_trace
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
@@ -103,14 +104,14 @@ class ExplainRequest(BaseModel):
     recent_interactions: List[Dict[str, Any]]
 
 
-class AuditInteraction(BaseModel):
+class Interaction(BaseModel):
     post_id: int
     action: str
     title: str
 
 
-class AuditRequest(BaseModel):
-    interactions: List[AuditInteraction]
+class InteractionRequest(BaseModel):
+    interactions: List[Interaction]
 
 
 def build_profile(interactions: List[Interaction]) -> Dict[str, float]:
@@ -272,7 +273,7 @@ Be honest that this is a simplified simulation, not TikTok's actual algorithm.
 
 
 @app.post("/audit")
-def audit_feed(req: AuditRequest):
+def audit_feed(req: InteractionRequest):
 
     interactions = [
         interaction.model_dump()
@@ -295,3 +296,17 @@ def audit_feed(req: AuditRequest):
         "metrics": metrics,
         "ai_analysis": ai_audit.model_dump(),
     }
+
+@app.post("/trace")
+def trace_recommendation(
+    req: InteractionRequest,
+):
+    interactions = [
+        interaction.model_dump()
+        for interaction in req.interactions
+    ]
+
+    return build_recommendation_trace(
+        interactions=interactions,
+        posts=POSTS,
+    )
