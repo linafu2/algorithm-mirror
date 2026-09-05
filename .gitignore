@@ -1,0 +1,16 @@
+# Python
+backend/venv/
+venv/
+__pycache__/
+*.pyc
+
+# Environment variables / secrets
+.env
+backend/.env
+
+# Node / Next.js
+node_modules/
+.next/
+
+# macOS
+.DS_Store
