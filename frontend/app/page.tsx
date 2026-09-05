@@ -25,18 +25,43 @@ type AlgorithmReason = {
   tag_scores: Record<string, number>;
 };
 
+type FeedMetrics = {
+  diversity_score: number;
+  concentration_score: number;
+  dominant_topic: string | null;
+  top_topics: {
+    topic: string;
+    share: number;
+  }[];
+  interaction_count: number;
+};
+
+type FeedAudit = {
+  summary: string;
+  dominant_patterns: string[];
+  narrowing_level: "low" | "moderate" | "high";
+  user_reflection: string;
+  suggested_action: string;
+};
+
+type AuditResponse = {
+  metrics: FeedMetrics;
+  ai_analysis: FeedAudit;
+};
+
 export default function Home() {
   const [currentPost, setCurrentPost] = useState<Post | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [profile, setProfile] = useState<Record<string, number>>({});
-  const [algorithmReason, setAlgorithmReason] = useState<AlgorithmReason | null>(
-    null
-  );
+  const [algorithmReason, setAlgorithmReason] = useState<AlgorithmReason | null>(null);
   const [claudeExplanation, setClaudeExplanation] = useState("");
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingAction, setLoadingAction] = useState(false);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [error, setError] = useState("");
+  const [feedAudit, setFeedAudit] = useState<AuditResponse | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
 
   const loadRecommendation = useCallback(async (nextInteractions: Interaction[]) => {
     const res = await fetch(`${API}/recommend`, {
@@ -118,6 +143,52 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Claude request failed.");
     } finally {
       setLoadingExplanation(false);
+    }
+  }
+
+  async function runFeedAudit() {
+    if (interactions.length === 0) {
+      setAuditError(
+        "Interact with a few posts before running an audit."
+      );
+      return;
+    }
+  
+    setAuditLoading(true);
+    setAuditError(null);
+  
+    try {
+      const response = await fetch(
+        "http://localhost:8000/audit",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            interactions,
+          }),
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(
+          `Audit failed: ${response.status}`
+        );
+      }
+  
+      const data: AuditResponse =
+        await response.json();
+  
+      setFeedAudit(data);
+    } catch (error) {
+      console.error(error);
+  
+      setAuditError(
+        "Something went wrong while auditing the feed."
+      );
+    } finally {
+      setAuditLoading(false);
     }
   }
 
@@ -274,19 +345,151 @@ export default function Home() {
 
           <div>
             <button
-              onClick={explainFeed}
-              disabled={loadingExplanation}
+              onClick={runFeedAudit}
+              disabled={auditLoading}
               className="w-full px-4 py-3 rounded-xl bg-white text-black font-medium disabled:opacity-50"
             >
-              {loadingExplanation
-                ? "Asking Claude..."
-                : "Ask Claude to explain my feed"}
+              {auditLoading
+                ? "Auditing feed..."
+                : "Audit my algorithm"}
             </button>
 
-            {claudeExplanation && (
-              <div className="mt-4 p-4 rounded-xl bg-neutral-950 text-neutral-200 text-sm leading-relaxed">
-                {claudeExplanation}
+            {feedAudit && (
+              <div className="mt-6 space-y-6">
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-neutral-500">
+                    Feed diversity
+                  </p>
+
+                  <p className="text-4xl font-semibold mt-1">
+                    {feedAudit.metrics.diversity_score}
+                  </p>
+
+                  <div className="h-2 bg-neutral-800 rounded mt-2">
+                    <div
+                      className="h-2 bg-white rounded"
+                      style={{
+                        width: `${feedAudit.metrics.diversity_score}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-neutral-500">
+                    Feed concentration
+                  </p>
+
+                  <p className="text-4xl font-semibold mt-1">
+                    {feedAudit.metrics.concentration_score}
+                  </p>
+                </div>
+
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-neutral-500">
+                    Dominant topic
+                  </p>
+
+                  <p className="text-xl mt-1">
+                    {feedAudit.metrics.dominant_topic ?? "None yet"}
+                  </p>
+                </div>
+
+
+                <div>
+                  <h3 className="font-semibold">
+                    What the algorithm sees
+                  </h3>
+
+                  <div className="mt-3 space-y-2">
+                    {feedAudit.metrics.top_topics.map(
+                      (topic) => (
+                        <div
+                          key={topic.topic}
+                          className="flex justify-between text-sm"
+                        >
+                          <span>{topic.topic}</span>
+
+                          <span className="text-neutral-400">
+                            {topic.share}%
+                          </span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+
+                <div className="border-t border-neutral-800 pt-5">
+                  <p className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
+                    Claude interpretation
+                  </p>
+
+                  <p className="leading-relaxed text-neutral-200">
+                    {feedAudit.ai_analysis.summary}
+                  </p>
+                </div>
+
+
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    Patterns detected
+                  </p>
+
+                  <ul className="space-y-2 text-sm text-neutral-300">
+                    {feedAudit.ai_analysis.dominant_patterns.map(
+                      (pattern) => (
+                        <li key={pattern}>
+                          • {pattern}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-neutral-500">
+                    Feed narrowing
+                  </p>
+
+                  <p className="text-lg capitalize mt-1">
+                    {feedAudit.ai_analysis.narrowing_level}
+                  </p>
+                </div>
+
+
+                <div className="bg-neutral-950 p-4 rounded-xl">
+                  <p className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
+                    Mirror
+                  </p>
+
+                  <p className="italic text-neutral-200">
+                    {feedAudit.ai_analysis.user_reflection}
+                  </p>
+                </div>
+
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-neutral-500 mb-2">
+                    Change your feed
+                  </p>
+
+                  <p className="text-sm text-neutral-300">
+                    {feedAudit.ai_analysis.suggested_action}
+                  </p>
+                </div>
+
               </div>
+            )}
+
+            {auditError && (
+              <p className="mt-3 text-sm">
+                {auditError}
+              </p>
             )}
           </div>
         </aside>
