@@ -104,14 +104,14 @@ class ExplainRequest(BaseModel):
     recent_interactions: List[Dict[str, Any]]
 
 
-class Interaction(BaseModel):
+class InteractionDetail(BaseModel):
     post_id: int
     action: str
     title: str
 
 
 class InteractionRequest(BaseModel):
-    interactions: List[Interaction]
+    interactions: List[InteractionDetail]
 
 
 def build_profile(interactions: List[Interaction]) -> Dict[str, float]:
