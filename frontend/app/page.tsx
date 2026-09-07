@@ -426,24 +426,10 @@ export default function Home() {
                   <p className="text-neutral-200 leading-relaxed">
                     {algorithmReason.summary}
                   </p>
-                  <div className="rounded-xl bg-neutral-950 p-3 text-neutral-400">
-                    <div className="mb-2">
-                      Match score:{" "}
-                      <span className="text-white">{algorithmReason.score}</span>
-                    </div>
-                    {algorithmReason.matched_tags.map((tag) => (
-                      <div
-                        key={tag}
-                        className="flex justify-between py-0.5 text-xs"
-                      >
-                        <span>#{tag}</span>
-                        <span>
-                          {algorithmReason.tag_scores[tag] > 0 ? "+" : ""}
-                          {algorithmReason.tag_scores[tag]}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-neutral-500">
+                    Run a trace below for tag-level scoring, your last
+                    action&apos;s impact, and the full unseen queue.
+                  </p>
                 </div>
               ) : (
                 <p className="text-neutral-400 text-sm">
@@ -496,22 +482,26 @@ export default function Home() {
             <>
             {analysisTab === "trace" && recommendationTrace?.selected && (
               <div className="space-y-6 mt-6">
+                <p className="text-sm text-neutral-400">
+                  Detailed scoring for{" "}
+                  <span className="text-neutral-200">
+                    {recommendationTrace.selected.title}
+                  </span>
+                  , plus how your last action shifted the queue.
+                </p>
+
                 <div className="border border-neutral-800 rounded-2xl p-5">
                   <p className="text-xs uppercase tracking-wider text-neutral-500">
-                    Recommendation trace
+                    Current recommendation
                   </p>
 
                   <h3 className="text-xl font-semibold mt-2">
-                    Why you saw this
+                    Score breakdown
                   </h3>
 
                   <p className="text-sm text-neutral-400 mt-1">
-                    Based on your full profile from every interaction so far, 
-                    not just your last action.
-                  </p>
-
-                  <p className="text-neutral-300 mt-3">
-                    {recommendationTrace.selected.title}
+                    Break down of tag contributions from your full profile. 
+                    What's behind the "Why this recommendation?" summary in the sidebar.
                   </p>
 
                   <div className="mt-6 space-y-3">
@@ -542,7 +532,7 @@ export default function Home() {
 
                   <div className="border-t border-neutral-800 mt-5 pt-4 flex justify-between">
                     <span className="text-sm text-neutral-400">
-                      Final ranking score
+                      Total ranking score
                     </span>
                     <span className="font-semibold">
                       {recommendationTrace.selected.score}
