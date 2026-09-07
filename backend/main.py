@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from audit import build_feed_metrics
 from llm import generate_feed_audit
-from trace import build_recommendation_trace
+from rec_trace import build_recommendation_trace
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
