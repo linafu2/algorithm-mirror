@@ -88,3 +88,26 @@ def test_highest_scoring_post_is_selected():
     )
 
     assert result["selected"]["post_id"] == 3
+
+def test_not_interested_reduces_candidate_score():
+
+    profile = {
+        "technology": -2.0,
+        "internet": -2.0,
+    }
+
+    post = {
+        "id": 2,
+        "title": "Algorithm video",
+        "tags": [
+            "technology",
+            "internet",
+        ],
+    }
+
+    result = score_post(
+        post,
+        profile,
+    )
+
+    assert result["score"] == -4.0
