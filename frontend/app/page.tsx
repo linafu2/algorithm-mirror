@@ -322,7 +322,7 @@ export default function Home() {
             <div className="border border-neutral-700 rounded-2xl p-8 min-h-[420px] flex flex-col justify-between">
               <div>
                 <div className="text-sm text-neutral-400 mb-3">
-                  Mock short-form post · {interactions.length + 1} of 8
+                  Mock short-form post · {interactions.length + 1} of 16
                 </div>
                 <h2 className="text-4xl font-semibold mb-4">
                   {currentPost.title}

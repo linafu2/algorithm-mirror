@@ -85,6 +85,93 @@ POSTS = [
         "tone": "outrage",
         "intensity": 5,
     },
+    {
+        "id": 9,
+        "title": "Why Boston keeps redesigning its streets",
+        "tags": [
+            "urbanism",
+            "transportation",
+            "policy",
+        ],
+        "tone": "analytical",
+        "intensity": 2,
+    },
+    {
+        "id": 10,
+        "title": "The weird psychology of infinite scroll",
+        "tags": [
+            "psychology",
+            "internet",
+            "attention",
+        ],
+        "tone": "reflective",
+        "intensity": 3,
+    },
+    {
+        "id": 11,
+        "title": "A week of outfits I actually wore",
+        "tags": [
+            "fashion",
+            "lifestyle",
+        ],
+        "tone": "casual",
+        "intensity": 1,
+    },
+    {
+        "id": 12,
+        "title": "Making a tiny ceramic lamp from scratch",
+        "tags": [
+            "art",
+            "pottery",
+            "education",
+        ],
+        "tone": "creative",
+        "intensity": 2,
+    },
+    {
+        "id": 13,
+        "title": "Why your feed starts feeling like you",
+        "tags": [
+            "technology",
+            "internet",
+            "psychology",
+        ],
+        "tone": "reflective",
+        "intensity": 3,
+    },
+    {
+        "id": 14,
+        "title": "The case against car-dependent cities",
+        "tags": [
+            "urbanism",
+            "transportation",
+            "politics",
+        ],
+        "tone": "argumentative",
+        "intensity": 4,
+    },
+    {
+        "id": 15,
+        "title": "Slow morning routine before class",
+        "tags": [
+            "lifestyle",
+            "attention",
+        ],
+        "tone": "calm",
+        "intensity": 1,
+    },
+    {
+        "id": 16,
+        "title": "Why outrage performs so well online",
+        "tags": [
+            "politics",
+            "conflict",
+            "internet",
+            "attention",
+        ],
+        "tone": "analytical",
+        "intensity": 4,
+    },
 ]
 
 ACTION_WEIGHTS = {
