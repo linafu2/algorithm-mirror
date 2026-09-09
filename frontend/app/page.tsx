@@ -66,6 +66,35 @@ type RecommendationTrace = {
   profile: Record<string, number>;
   selected: TraceCandidate | null;
   candidates: TraceCandidate[];
+  impact: InteractionImpact | null;
+};
+
+type ProfileChange = {
+  tag: string;
+  before: number;
+  after: number;
+  delta: number;
+};
+
+type CandidateChange = {
+  post_id: number;
+  title: string;
+  before_score: number;
+  after_score: number;
+  score_delta: number;
+  before_rank: number | null;
+  after_rank: number | null;
+  rank_change: number;
+};
+
+type InteractionImpact = {
+  interaction: {
+    post_id: number;
+    title: string;
+    action: string;
+  };
+  profile_changes: ProfileChange[];
+  candidate_changes: CandidateChange[];
 };
 
 
@@ -293,7 +322,7 @@ export default function Home() {
             <div className="border border-neutral-700 rounded-2xl p-8 min-h-[420px] flex flex-col justify-between">
               <div>
                 <div className="text-sm text-neutral-400 mb-3">
-                  Mock short-form post · {interactions.length + 1} of 8
+                  Mock short-form post · {interactions.length + 1} of 16
                 </div>
                 <h2 className="text-4xl font-semibold mb-4">
                   {currentPost.title}
@@ -397,24 +426,10 @@ export default function Home() {
                   <p className="text-neutral-200 leading-relaxed">
                     {algorithmReason.summary}
                   </p>
-                  <div className="rounded-xl bg-neutral-950 p-3 text-neutral-400">
-                    <div className="mb-2">
-                      Match score:{" "}
-                      <span className="text-white">{algorithmReason.score}</span>
-                    </div>
-                    {algorithmReason.matched_tags.map((tag) => (
-                      <div
-                        key={tag}
-                        className="flex justify-between py-0.5 text-xs"
-                      >
-                        <span>#{tag}</span>
-                        <span>
-                          {algorithmReason.tag_scores[tag] > 0 ? "+" : ""}
-                          {algorithmReason.tag_scores[tag]}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-neutral-500">
+                    Run a trace below for tag-level scoring, your last
+                    action&apos;s impact, and the full unseen queue.
+                  </p>
                 </div>
               ) : (
                 <p className="text-neutral-400 text-sm">
@@ -466,18 +481,27 @@ export default function Home() {
           {showAnalysisPanel && (
             <>
             {analysisTab === "trace" && recommendationTrace?.selected && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <div className="space-y-6 mt-6">
+                <p className="text-sm text-neutral-400">
+                  Detailed scoring for{" "}
+                  <span className="text-neutral-200">
+                    {recommendationTrace.selected.title}
+                  </span>
+                  , plus how your last action shifted the queue.
+                </p>
+
                 <div className="border border-neutral-800 rounded-2xl p-5">
                   <p className="text-xs uppercase tracking-wider text-neutral-500">
-                    Recommendation trace
+                    Current recommendation
                   </p>
 
                   <h3 className="text-xl font-semibold mt-2">
-                    Why you saw this
+                    Score breakdown
                   </h3>
 
-                  <p className="text-neutral-300 mt-1">
-                    {recommendationTrace.selected.title}
+                  <p className="text-sm text-neutral-400 mt-1">
+                    Break down of tag contributions from your full profile. 
+                    What's behind the "Why this recommendation?" summary in the sidebar.
                   </p>
 
                   <div className="mt-6 space-y-3">
@@ -508,7 +532,7 @@ export default function Home() {
 
                   <div className="border-t border-neutral-800 mt-5 pt-4 flex justify-between">
                     <span className="text-sm text-neutral-400">
-                      Final ranking score
+                      Total ranking score
                     </span>
                     <span className="font-semibold">
                       {recommendationTrace.selected.score}
@@ -516,13 +540,151 @@ export default function Home() {
                   </div>
                 </div>
 
-                {recommendationTrace.candidates.length > 0 && (
-                  <div>
+                {recommendationTrace.impact && (
+                  <div className="border border-neutral-800 rounded-2xl p-5">
                     <p className="text-xs uppercase tracking-wider text-neutral-500">
-                      Candidate ranking
+                      Last interaction only
                     </p>
 
-                    <div className="mt-3 space-y-2">
+                    <h3 className="text-xl font-semibold mt-2">
+                      Last interaction impact
+                    </h3>
+
+                    <p className="text-sm text-neutral-400 mt-1">
+                      What changed from your most recent action alone, before
+                      vs. after that single like, skip, or not interested.
+                    </p>
+
+                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr_auto_1fr] gap-6 lg:gap-4 items-start">
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-neutral-500">
+                          Your last action
+                        </p>
+
+                        <p className="mt-3 text-lg">
+                          <span className="capitalize font-medium">
+                            {recommendationTrace.impact.interaction.action.replace(
+                              "_",
+                              " "
+                            )}
+                          </span>
+                          {" · "}
+                          <span className="text-neutral-300">
+                            {recommendationTrace.impact.interaction.title}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="hidden lg:flex items-center justify-center text-neutral-600 text-2xl pt-8">
+                        →
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-neutral-500">
+                          Profile change from this action
+                        </p>
+
+                        <div className="mt-4 space-y-3">
+                          {recommendationTrace.impact.profile_changes.map(
+                            (change) => (
+                              <div
+                                key={change.tag}
+                                className="flex items-center justify-between gap-4"
+                              >
+                                <span className="text-sm">{change.tag}</span>
+
+                                <div className="flex items-center gap-2 font-mono text-sm">
+                                  <span className="text-neutral-500">
+                                    {change.before}
+                                  </span>
+                                  <span className="text-neutral-600">→</span>
+                                  <span>{change.after}</span>
+                                  <span
+                                    className={
+                                      change.delta > 0
+                                        ? "text-green-400"
+                                        : change.delta < 0
+                                        ? "text-red-400"
+                                        : "text-neutral-500"
+                                    }
+                                  >
+                                    {change.delta > 0 ? "+" : ""}
+                                    {change.delta}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="hidden lg:flex items-center justify-center text-neutral-600 text-2xl pt-8">
+                        →
+                      </div>
+
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-neutral-500">
+                          Biggest shifts from this action
+                        </p>
+
+                        <div className="mt-4 space-y-3">
+                          {recommendationTrace.impact.candidate_changes
+                            .slice(0, 5)
+                            .map((candidate) => (
+                              <div
+                                key={candidate.post_id}
+                                className="flex items-start justify-between gap-4"
+                              >
+                                <div>
+                                  <p className="text-sm">{candidate.title}</p>
+                                  <p className="text-xs text-neutral-500 mt-1 font-mono">
+                                    {candidate.before_score} →{" "}
+                                    {candidate.after_score}
+                                  </p>
+                                </div>
+
+                                <div className="text-sm shrink-0">
+                                  {candidate.rank_change > 0 && (
+                                    <span className="text-green-400">
+                                      ↑ {candidate.rank_change}
+                                    </span>
+                                  )}
+
+                                  {candidate.rank_change < 0 && (
+                                    <span className="text-red-400">
+                                      ↓ {Math.abs(candidate.rank_change)}
+                                    </span>
+                                  )}
+
+                                  {candidate.rank_change === 0 && (
+                                    <span className="text-neutral-600">—</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {recommendationTrace.candidates.length > 0 && (
+                  <div className="border border-neutral-800 rounded-2xl p-5">
+                    <p className="text-xs uppercase tracking-wider text-neutral-500">
+                      Full queue
+                    </p>
+
+                    <h3 className="text-xl font-semibold mt-2">
+                      Future candidate ranking
+                    </h3>
+
+                    <p className="text-sm text-neutral-400 mt-1">
+                      Every unseen post, ranked by your cumulative profile from
+                      all interactions. This is the complete picture, not just
+                      what moved from your last action.
+                    </p>
+
+                    <div className="mt-4 space-y-2">
                       {recommendationTrace.candidates.map(
                         (candidate, index) => {
                           const highestScore =
@@ -539,7 +701,7 @@ export default function Home() {
                           return (
                             <div
                               key={candidate.post_id}
-                              className="py-3 border-b border-neutral-900"
+                              className="py-3 border-b border-neutral-900 last:border-b-0"
                             >
                               <div className="flex justify-between">
                                 <div className="flex gap-3">
