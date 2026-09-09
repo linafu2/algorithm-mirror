@@ -2,8 +2,11 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-import anthropic
 from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+import anthropic
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,8 +14,6 @@ from pydantic import BaseModel
 from audit import build_feed_metrics
 from llm import generate_feed_audit
 from rec_trace import build_recommendation_trace
-
-load_dotenv(Path(__file__).resolve().parent / ".env")
 
 app = FastAPI()
 
@@ -374,10 +375,16 @@ def audit_feed(req: InteractionRequest):
 
     recent_interactions = interactions[-10:]
 
-    ai_audit = generate_feed_audit(
-        metrics=metrics,
-        recent_interactions=recent_interactions,
-    )
+    try:
+        ai_audit = generate_feed_audit(
+            metrics=metrics,
+            recent_interactions=recent_interactions,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Feed audit failed: {exc}",
+        ) from exc
 
     return {
         "metrics": metrics,

@@ -1,10 +1,11 @@
+from pathlib import Path
 from typing import List, Literal
 
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from pydantic import BaseModel, Field
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 class FeedAudit(BaseModel):
     summary: str = Field(
